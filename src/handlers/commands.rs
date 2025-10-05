@@ -4,7 +4,14 @@ use crate::models::DbClient;
 
 pub async fn start_handler(bot: Bot, msg: Message, db: DbClient) -> ResponseResult<()> {
     let chat_id = msg.chat.id.0;
-    let chat_type = format!("{:?}", msg.chat.kind).to_lowercase();
+    let chat_type = match msg.chat.kind {
+        teloxide::types::ChatKind::Public(ref public) => match public.kind {
+            teloxide::types::PublicChatKind::Channel(_) => "channel".to_string(),
+            teloxide::types::PublicChatKind::Group => "group".to_string(),
+            teloxide::types::PublicChatKind::Supergroup(_) => "supergroup".to_string(),
+        },
+        teloxide::types::ChatKind::Private(_) => "private".to_string(),
+    };
     let title = msg.chat.title().map(|s| s.to_string());
     let username = msg.chat.username().map(|s| s.to_string());
 

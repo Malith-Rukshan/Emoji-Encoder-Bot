@@ -126,8 +126,8 @@ pub async fn stats_handler(bot: Bot, msg: Message, db: DbClient, admin_ids: Vec<
                  👥 Groups: `{}`\n\
                  📢 Channels: `{}`\n\n\
                  *System Stats:*\n\
-                 🧠 CPU Usage: `{:.1}%`\n\
-                 💾 RAM: `{:.1} MB / {:.1} MB` \\({:.1}%\\)",
+                 🧠 CPU Usage: `{:.1}\\%`\n\
+                 💾 RAM: `{:.1} MB / {:.1} MB` \\({:.1}\\%\\)",
                 stats.total_chats,
                 stats.users,
                 stats.groups,

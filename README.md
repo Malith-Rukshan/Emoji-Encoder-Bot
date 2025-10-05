@@ -30,6 +30,9 @@
 - 🐳 **Docker Ready** - Easy deployment with Docker Compose
 - ☁️ **Cloud Compatible** - Deploy to Railway, Heroku, Render, and more
 
+## 🎬 Demo
+
+<img src="https://raw.githubusercontent.com/Malith-Rukshan/Emoji-Encoder-Bot/refs/heads/main/assets/demo.gif" alt="Emoji Encoder Bot Demo" width="320px" style="border-radius: 15px; box-shadow: 0 8px 16px rgba(0,0,0,0.15);"/>
 
 ## 🚀 Quick Start
 

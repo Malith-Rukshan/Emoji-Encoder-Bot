@@ -72,7 +72,8 @@ pub async fn help_handler(bot: Bot, msg: Message) -> ResponseResult<()> {
         *Other Commands:*\n\
         /start \\- Start the bot\n\
         /help \\- Show this help message\n\
-        /about \\- About this bot";
+        /about \\- About this bot\n\n\
+        🎬 Demo Video: [Click Here](https://raw.githubusercontent.com/Malith-Rukshan/Emoji-Encoder-Bot/refs/heads/main/assets/demo.mp4)";
 
     bot.send_message(msg.chat.id, help_text)
         .parse_mode(teloxide::types::ParseMode::MarkdownV2)
@@ -95,8 +96,7 @@ pub async fn about_handler(bot: Bot, msg: Message) -> ResponseResult<()> {
         📊 *Open Source:*\n\
         This bot is fully open source and available on GitHub\\. Feel free to contribute, report issues, or deploy your own instance\\!\n\n\
         https://github\\.com/Malith\\-Rukshan/Emoji\\-Encoder\\-Bot\n\n\
-        👨‍💻 *Developer:* @MalithRukshan\n\n\
-        Made with ❤️ and Rust 🦀";
+        👨‍💻 *Developer:* @MalithRukshan";
 
     bot.send_message(msg.chat.id, about_text)
         .parse_mode(teloxide::types::ParseMode::MarkdownV2)

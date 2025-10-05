@@ -127,13 +127,20 @@ Send `/start` to [@userinfobot](https://t.me/userinfobot) on Telegram
 
 ## 📖 Usage
 
-### Regular Mode
+### In Private Chat
 
 1. **Send text** to the bot
 2. **Choose an emoji** from the grid (or Random/Custom)
-3. **Copy the encoded emoji** using the button
-4. **Share it anywhere!**
-5. **Send it back** to the bot to decode
+3. **Share the encoded emoji anywhere!**
+4. **Send encoded emoji back** to automatically decode
+
+### In Groups
+
+Use commands to encode/decode messages:
+- `/encode <text>` - Encode text with random emoji
+- `/encode` (as reply) - Encode the replied message
+- `/decode <emoji>` - Decode hidden message from emoji
+- `/decode` (as reply) - Decode the replied message
 
 ### Inline Mode
 
@@ -143,9 +150,13 @@ Type in any chat:
 ```
 Select from the results to send the encoded emoji directly!
 
-### Commands
+### All Commands
 
 - `/start` - Start the bot
+- `/help` - Show help message with usage instructions
+- `/about` - About this bot
+- `/encode <text>` - Encode text or reply to a message
+- `/decode <emoji>` - Decode emoji or reply to a message
 - `/stats` - View bot statistics (admin only)
 
 ---

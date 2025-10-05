@@ -48,6 +48,31 @@ pub async fn start_handler(bot: Bot, msg: Message, db: DbClient) -> ResponseResu
     Ok(())
 }
 
+pub async fn help_handler(bot: Bot, msg: Message) -> ResponseResult<()> {
+    let help_text = "📚 *How to Use Emoji Encoder Bot*\n\n\
+        *In Private Chat:*\n\
+        • Send any text and select an emoji to encode\n\
+        • Send encoded emoji to automatically decode\n\n\
+        *Commands:*\n\
+        /encode \\<text\\> \\- Encode text with random emoji\n\
+        /encode \\(reply\\) \\- Encode replied message\n\
+        /decode \\<emoji\\> \\- Decode hidden message\n\
+        /decode \\(reply\\) \\- Decode replied message\n\n\
+        *In Groups:*\n\
+        Use /encode or /decode commands with text or as reply to messages\\.\n\n\
+        *Inline Mode:*\n\
+        Type @EmojiEncoderBot followed by your text in any chat\\.\n\n\
+        *Other Commands:*\n\
+        /start \\- Start the bot\n\
+        /help \\- Show this help message\n\
+        /about \\- About this bot";
+
+    bot.send_message(msg.chat.id, help_text)
+        .parse_mode(teloxide::types::ParseMode::MarkdownV2)
+        .await?;
+    Ok(())
+}
+
 pub async fn about_handler(bot: Bot, msg: Message) -> ResponseResult<()> {
     let about_text = "🔐 *Emoji Encoder Bot*\n\n\
         *Hide Secret Messages Inside Emojis\\!* 🤫✨\n\n\

@@ -96,6 +96,8 @@ async fn main() {
 enum Command {
     #[command(description = "Start the bot")]
     Start,
+    #[command(description = "Show help message")]
+    Help,
     #[command(description = "About this bot")]
     About,
     #[command(description = "Show bot statistics (admin only)")]
@@ -121,6 +123,9 @@ async fn command_handler(
                 bot.send_message(msg.chat.id, "👋 Welcome! (Running without database)").await?;
                 Ok(())
             }
+        }
+        Command::Help => {
+            handlers::help_handler(bot, msg).await
         }
         Command::About => {
             about_handler(bot, msg).await

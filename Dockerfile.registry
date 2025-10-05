@@ -1,0 +1,5 @@
+# Use pre-built image from GitHub Container Registry
+FROM ghcr.io/malith-rukshan/emoji-encoder-bot:latest
+
+# This Dockerfile simply uses the pre-built image from GHCR
+# No build steps required - the image is already built and published

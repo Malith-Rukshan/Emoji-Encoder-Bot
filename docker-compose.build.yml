@@ -17,7 +17,7 @@ services:
       retries: 5
 
   bot:
-    image: ghcr.io/malith-rukshan/emoji-encoder-bot:latest
+    build: .
     container_name: emoji_encoder_bot
     depends_on:
       mongodb:

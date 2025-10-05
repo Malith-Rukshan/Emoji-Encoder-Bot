@@ -10,17 +10,64 @@ pub async fn start_handler(bot: Bot, msg: Message, db: DbClient) -> ResponseResu
 
     db.save_chat(chat_id, chat_type, title, username).await.ok();
 
+    let bot_username = bot.get_me().await?.username.clone().unwrap_or_else(|| "EmojiEncoderBot".to_string());
+
+    let keyboard = InlineKeyboardMarkup::new(vec![
+        vec![
+            InlineKeyboardButton::url(
+                "➕ Add to Channel ➕",
+                format!("https://t.me/{}?startchannel=botstart", bot_username).parse().unwrap()
+            ),
+            InlineKeyboardButton::url(
+                "➕ Add to Group ➕",
+                format!("https://t.me/{}?startgroup=botstart", bot_username).parse().unwrap()
+            ),
+        ],
+        vec![
+            InlineKeyboardButton::url(
+                "📥 GitHub Source",
+                "https://github.com/Malith-Rukshan/Emoji-Encoder-Bot".parse().unwrap()
+            ),
+        ],
+    ]);
+
     bot.send_message(
         msg.chat.id,
-        "👋 Welcome to Emoji Encoder Bot!\n\n\
-         Send me any text and I'll help you hide it inside an emoji using Unicode variation selectors.\n\n\
-         📝 Features:\n\
+        "👋 *Welcome to Emoji Encoder Bot\\!*\n\n\
+         Send me any text and I'll help you hide it inside an emoji using Unicode variation selectors\\.\n\n\
+         📝 *Features:*\n\
          • Send text to encode with an emoji\n\
          • Send encoded emoji to decode the hidden message\n\
          • Use inline mode: @EmojiEncoderBot <emoji> <text>\n\n\
-         Just send me a message to get started!"
+         Just send me a message to get started\\!"
     )
+    .parse_mode(teloxide::types::ParseMode::MarkdownV2)
+    .reply_markup(keyboard)
     .await?;
+    Ok(())
+}
+
+pub async fn about_handler(bot: Bot, msg: Message) -> ResponseResult<()> {
+    let about_text = "🔐 *Emoji Encoder Bot*\n\n\
+        *Hide Secret Messages Inside Emojis\\!* 🤫✨\n\n\
+        A lightweight Telegram bot built with Rust that uses Unicode variation selectors to hide text messages inside emojis\\. \
+        The encoded emoji looks completely normal but contains hidden data\\!\n\n\
+        🦀 *Built with:*\n\
+        • Rust \\- High\\-performance systems language\n\
+        • Teloxide \\- Elegant Telegram bot framework\n\
+        • MongoDB \\- Optional stats tracking\n\n\
+        🔬 *How it works:*\n\
+        The bot encodes your text into UTF\\-8 bytes, then converts each byte to invisible Unicode variation selectors \\(VS1\\-VS256\\) that are appended to the emoji\\. \
+        These invisible characters are completely transparent to the user but can be decoded back to the original text\\!\n\n\
+        📊 *Open Source:*\n\
+        This bot is fully open source and available on GitHub\\. Feel free to contribute, report issues, or deploy your own instance\\!\n\n\
+        https://github\\.com/Malith\\-Rukshan/Emoji\\-Encoder\\-Bot\n\n\
+        👨‍💻 *Developer:* @MalithRukshan\n\n\
+        Made with ❤️ and Rust 🦀";
+
+    bot.send_message(msg.chat.id, about_text)
+        .parse_mode(teloxide::types::ParseMode::MarkdownV2)
+        .await?;
     Ok(())
 }
 

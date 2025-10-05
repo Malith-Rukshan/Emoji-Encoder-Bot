@@ -4,7 +4,7 @@ mod utils;
 
 use teloxide::prelude::*;
 use teloxide::utils::command::BotCommands;
-use handlers::{start_handler, stats_handler, message_handler, callback_handler, inline_query_handler};
+use handlers::{start_handler, stats_handler, about_handler, message_handler, callback_handler, inline_query_handler};
 use models::{DbClient, create_state_storage};
 
 #[tokio::main]
@@ -96,6 +96,8 @@ async fn main() {
 enum Command {
     #[command(description = "Start the bot")]
     Start,
+    #[command(description = "About this bot")]
+    About,
     #[command(description = "Show bot statistics (admin only)")]
     Stats,
 }
@@ -115,6 +117,9 @@ async fn command_handler(
                 bot.send_message(msg.chat.id, "👋 Welcome! (Running without database)").await?;
                 Ok(())
             }
+        }
+        Command::About => {
+            about_handler(bot, msg).await
         }
         Command::Stats => {
             if let Some(db) = db {

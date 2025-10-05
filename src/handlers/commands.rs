@@ -98,7 +98,7 @@ pub async fn about_handler(bot: Bot, msg: Message) -> ResponseResult<()> {
 }
 
 pub async fn stats_handler(bot: Bot, msg: Message, db: DbClient, admin_ids: Vec<i64>) -> ResponseResult<()> {
-    use sysinfo::System;
+    use sysinfo::{System, Pid, ProcessRefreshKind};
 
     let user_id = msg.from.as_ref().map(|u| u.id.0 as i64).unwrap_or(0);
 
@@ -108,13 +108,18 @@ pub async fn stats_handler(bot: Bot, msg: Message, db: DbClient, admin_ids: Vec<
         return Ok(());
     }
 
-    // Get system stats
-    let mut sys = System::new_all();
-    sys.refresh_all();
+    // Get this bot process's stats
+    let mut sys = System::new();
+    let pid = Pid::from_u32(std::process::id());
+    sys.refresh_process_specifics(pid, ProcessRefreshKind::everything());
 
-    let total_memory = sys.total_memory() as f64 / 1024.0 / 1024.0; // MB
-    let used_memory = sys.used_memory() as f64 / 1024.0 / 1024.0; // MB
-    let cpu_usage = sys.global_cpu_usage();
+    let (cpu_usage, memory_mb) = if let Some(process) = sys.process(pid) {
+        let cpu = process.cpu_usage();
+        let mem = process.memory() as f64 / 1024.0 / 1024.0; // Convert to MB
+        (cpu, mem)
+    } else {
+        (0.0, 0.0)
+    };
 
     match db.get_stats().await {
         Ok(stats) => {
@@ -125,17 +130,15 @@ pub async fn stats_handler(bot: Bot, msg: Message, db: DbClient, admin_ids: Vec<
                  🧑 Users: `{}`\n\
                  👥 Groups: `{}`\n\
                  📢 Channels: `{}`\n\n\
-                 *System Stats:*\n\
+                 *Bot Process:*\n\
                  🧠 CPU Usage: `{:.1}\\%`\n\
-                 💾 RAM: `{:.1} MB / {:.1} MB` \\({:.1}\\%\\)",
+                 💾 Memory: `{:.1}MB`",
                 stats.total_chats,
                 stats.users,
                 stats.groups,
                 stats.channels,
                 cpu_usage,
-                used_memory,
-                total_memory,
-                (used_memory / total_memory) * 100.0
+                memory_mb
             ).replace('.', "\\.");
             bot.send_message(msg.chat.id, message)
                 .parse_mode(teloxide::types::ParseMode::MarkdownV2)

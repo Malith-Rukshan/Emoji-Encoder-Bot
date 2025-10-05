@@ -200,6 +200,7 @@ The encoded emoji looks completely normal but contains hidden data! 🎩✨
 
 ### Key Features
 - ⚡ **High Performance** - Built with Rust for maximum speed
+- 🪶 **Lightweight** - Only ~14MB binary size, ~17MB RAM usage
 - 🧠 **In-Memory State** - No database overhead for conversations
 - 📊 **Optional Stats** - Works with or without MongoDB
 - 🔄 **Auto-Reconnect** - Resilient to network issues

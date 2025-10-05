@@ -18,11 +18,17 @@ pub async fn message_handler(bot: Bot, msg: Message, state_storage: StateStorage
             handle_custom_emoji(bot, msg, state_storage, user_id, &original_text, &text).await?;
         }
         BotState::Idle => {
-            if let Ok(decoded) = decode(&text) {
-                if !decoded.is_empty() {
-                    bot.send_message(msg.chat.id, format!("🔓 Decoded message:\n\n{}", decoded))
-                        .await?;
-                    return Ok(());
+            // Try to decode only if the message contains variation selectors
+            if text.chars().any(|c| {
+                let code = c as u32;
+                (0xFE00..=0xFE0F).contains(&code) || (0xE0100..=0xE01EF).contains(&code)
+            }) {
+                if let Ok(decoded) = decode(&text) {
+                    if !decoded.is_empty() {
+                        bot.send_message(msg.chat.id, format!("🔓 Decoded message:\n\n{}", decoded))
+                            .await?;
+                        return Ok(());
+                    }
                 }
             }
 

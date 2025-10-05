@@ -1,5 +1,5 @@
 use teloxide::{prelude::*, types::{InlineKeyboardButton, InlineKeyboardMarkup}};
-use crate::utils::EMOJI_LIST;
+use crate::utils::{EMOJI_LIST, encode, decode, get_random_emoji};
 use crate::models::DbClient;
 
 pub async fn start_handler(bot: Bot, msg: Message, db: DbClient) -> ResponseResult<()> {
@@ -38,6 +38,7 @@ pub async fn start_handler(bot: Bot, msg: Message, db: DbClient) -> ResponseResu
          📝 *Features:*\n\
          • Send text to encode with an emoji\n\
          • Send encoded emoji to decode the hidden message\n\
+         • Use /encode or /decode commands \\(works in groups\\)\n\
          • Use inline mode: @EmojiEncoderBot <emoji> <text>\n\n\
          Just send me a message to get started\\!"
     )
@@ -157,4 +158,87 @@ pub fn create_emoji_keyboard() -> InlineKeyboardMarkup {
     )]);
 
     InlineKeyboardMarkup::new(keyboard)
+}
+
+pub async fn encode_command_handler(bot: Bot, msg: Message, text: String) -> ResponseResult<()> {
+    let text_to_encode = if text.trim().is_empty() {
+        // If no text provided, check if it's a reply to a message
+        if let Some(reply_msg) = msg.reply_to_message() {
+            reply_msg.text().unwrap_or("").to_string()
+        } else {
+            bot.send_message(msg.chat.id, "❌ Please provide text to encode or reply to a message with /encode")
+                .await?;
+            return Ok(());
+        }
+    } else {
+        text
+    };
+
+    if text_to_encode.is_empty() {
+        bot.send_message(msg.chat.id, "❌ No text to encode")
+            .await?;
+        return Ok(());
+    }
+
+    let emoji = get_random_emoji();
+    match encode(emoji, &text_to_encode) {
+        Ok(encoded) => {
+            bot.send_message(msg.chat.id, &encoded).await?;
+        }
+        Err(e) => {
+            bot.send_message(msg.chat.id, format!("❌ Error encoding: {}", e))
+                .await?;
+        }
+    }
+
+    Ok(())
+}
+
+pub async fn decode_command_handler(bot: Bot, msg: Message, text: String) -> ResponseResult<()> {
+    let text_to_decode = if text.trim().is_empty() {
+        // If no text provided, check if it's a reply to a message
+        if let Some(reply_msg) = msg.reply_to_message() {
+            reply_msg.text().unwrap_or("").to_string()
+        } else {
+            bot.send_message(msg.chat.id, "❌ Please provide encoded emoji to decode or reply to a message with /decode")
+                .await?;
+            return Ok(());
+        }
+    } else {
+        text
+    };
+
+    if text_to_decode.is_empty() {
+        bot.send_message(msg.chat.id, "❌ No text to decode")
+            .await?;
+        return Ok(());
+    }
+
+    // Check if the text contains variation selectors
+    if !text_to_decode.chars().any(|c| {
+        let code = c as u32;
+        (0xFE00..=0xFE0F).contains(&code) || (0xE0100..=0xE01EF).contains(&code)
+    }) {
+        bot.send_message(msg.chat.id, "❌ No encoded message found")
+            .await?;
+        return Ok(());
+    }
+
+    match decode(&text_to_decode) {
+        Ok(decoded) => {
+            if decoded.is_empty() {
+                bot.send_message(msg.chat.id, "❌ No encoded message found")
+                    .await?;
+            } else {
+                bot.send_message(msg.chat.id, format!("🔓 Decoded message:\n\n{}", decoded))
+                    .await?;
+            }
+        }
+        Err(e) => {
+            bot.send_message(msg.chat.id, format!("❌ Error decoding: {}", e))
+                .await?;
+        }
+    }
+
+    Ok(())
 }

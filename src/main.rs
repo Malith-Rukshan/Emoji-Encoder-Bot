@@ -100,6 +100,10 @@ enum Command {
     About,
     #[command(description = "Show bot statistics (admin only)")]
     Stats,
+    #[command(description = "Encode text or reply to a message")]
+    Encode(String),
+    #[command(description = "Decode emoji or reply to a message")]
+    Decode(String),
 }
 
 async fn command_handler(
@@ -128,6 +132,12 @@ async fn command_handler(
                 bot.send_message(msg.chat.id, "❌ Stats unavailable (database not connected)").await?;
                 Ok(())
             }
+        }
+        Command::Encode(text) => {
+            handlers::encode_command_handler(bot, msg, text).await
+        }
+        Command::Decode(text) => {
+            handlers::decode_command_handler(bot, msg, text).await
         }
     }
 }

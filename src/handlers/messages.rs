@@ -26,11 +26,12 @@ pub async fn message_handler(bot: Bot, msg: Message, state_storage: StateStorage
                 }
             }
 
-            let keyboard = create_emoji_keyboard(&text);
+            let keyboard = create_emoji_keyboard();
             bot.send_message(
                 msg.chat.id,
                 "Select an emoji to encode your message:",
             )
+            .reply_parameters(teloxide::types::ReplyParameters::new(msg.id))
             .reply_markup(keyboard)
             .await?;
         }

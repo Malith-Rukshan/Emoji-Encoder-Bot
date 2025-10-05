@@ -124,7 +124,7 @@ pub async fn stats_handler(bot: Bot, msg: Message, db: DbClient, admin_ids: Vec<
     Ok(())
 }
 
-pub fn create_emoji_keyboard(text: &str) -> InlineKeyboardMarkup {
+pub fn create_emoji_keyboard() -> InlineKeyboardMarkup {
     let mut keyboard: Vec<Vec<InlineKeyboardButton>> = Vec::new();
 
     // Create 5x3 grid of emojis (15 emojis total)
@@ -137,7 +137,7 @@ pub fn create_emoji_keyboard(text: &str) -> InlineKeyboardMarkup {
                 let emoji = EMOJI_LIST[idx];
                 button_row.push(InlineKeyboardButton::callback(
                     emoji.to_string(),
-                    format!("encode:{}:{}", emoji, text),
+                    format!("encode:{}", emoji),
                 ));
             }
         }
@@ -147,13 +147,13 @@ pub fn create_emoji_keyboard(text: &str) -> InlineKeyboardMarkup {
     // Add Random button
     keyboard.push(vec![InlineKeyboardButton::callback(
         "🎲 Random",
-        format!("random:{}", text),
+        "random".to_string(),
     )]);
 
     // Add Custom button
     keyboard.push(vec![InlineKeyboardButton::callback(
         "✏️ Custom Emoji",
-        format!("custom:{}", text),
+        "custom".to_string(),
     )]);
 
     InlineKeyboardMarkup::new(keyboard)

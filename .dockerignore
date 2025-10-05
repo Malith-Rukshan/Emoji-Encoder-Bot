@@ -1,0 +1,9 @@
+target/
+.env
+.git/
+.gitignore
+ts/
+*.md
+.DS_Store
+Dockerfile
+docker-compose.yml

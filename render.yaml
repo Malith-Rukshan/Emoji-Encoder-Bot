@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: emoji-encoder-bot
+    env: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      - key: ADMIN_IDS
+        sync: false
+      - key: RUST_LOG
+        value: info

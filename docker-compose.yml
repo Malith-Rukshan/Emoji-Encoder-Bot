@@ -1,0 +1,33 @@
+services:
+  mongodb:
+    image: mongo:8-noble
+    container_name: emoji_encoder_mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME:-emojibot}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-emojibot123}
+    volumes:
+      - mongodb_data:/data/db
+    ports:
+      - "27017:27017"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  bot:
+    build: .
+    container_name: emoji_encoder_bot
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN}
+      MONGODB_URI: mongodb://${MONGO_USERNAME:-emojibot}:${MONGO_PASSWORD:-emojibot123}@mongodb:27017/emoji_encoder_bot?authSource=admin
+      ADMIN_IDS: ${ADMIN_IDS:-}
+      RUST_LOG: ${RUST_LOG:-info}
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:

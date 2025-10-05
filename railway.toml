@@ -1,0 +1,8 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "/app/emoji-encoder-bot"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

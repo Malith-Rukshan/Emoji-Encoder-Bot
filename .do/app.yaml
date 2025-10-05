@@ -1,0 +1,22 @@
+name: emoji-encoder-bot
+services:
+  - name: bot
+    dockerfile_path: Dockerfile
+    github:
+      branch: main
+      deploy_on_push: true
+      repo: Malith-Rukshan/Emoji-Encoder-Bot
+    envs:
+      - key: BOT_TOKEN
+        scope: RUN_TIME
+        type: SECRET
+      - key: MONGODB_URI
+        scope: RUN_TIME
+        type: SECRET
+      - key: ADMIN_IDS
+        scope: RUN_TIME
+      - key: RUST_LOG
+        value: info
+        scope: RUN_TIME
+    instance_count: 1
+    instance_size_slug: basic-xxs

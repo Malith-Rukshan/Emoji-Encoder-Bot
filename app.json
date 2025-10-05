@@ -1,0 +1,27 @@
+{
+  "name": "Emoji Encoder Bot",
+  "description": "A Telegram bot that hides text messages inside emojis using Unicode variation selectors",
+  "repository": "https://github.com/Malith-Rukshan/Emoji-Encoder-Bot",
+  "logo": "https://raw.githubusercontent.com/Malith-Rukshan/Emoji-Encoder-Bot/main/assets/logo.png",
+  "keywords": ["telegram", "bot", "emoji", "encoder", "rust", "teloxide"],
+  "stack": "container",
+  "env": {
+    "BOT_TOKEN": {
+      "description": "Your Telegram Bot Token from @BotFather",
+      "required": true
+    },
+    "MONGODB_URI": {
+      "description": "MongoDB connection URI (optional, for stats tracking)",
+      "required": false
+    },
+    "ADMIN_IDS": {
+      "description": "Comma-separated admin user IDs (optional)",
+      "required": false
+    },
+    "RUST_LOG": {
+      "description": "Logging level (info, debug, warn, error)",
+      "value": "info",
+      "required": false
+    }
+  }
+}

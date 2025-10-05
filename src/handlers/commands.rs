@@ -39,7 +39,7 @@ pub async fn start_handler(bot: Bot, msg: Message, db: DbClient) -> ResponseResu
          • Send text to encode with an emoji\n\
          • Send encoded emoji to decode the hidden message\n\
          • Use /encode or /decode commands \\(works in groups\\)\n\
-         • Use inline mode: @EmojiEncoderBot <emoji> <text>\n\n\
+         • Use inline mode: @EmojiEncoderBot [emoji] [text]\n\n\
          Just send me a message to get started\\!"
     )
     .parse_mode(teloxide::types::ParseMode::MarkdownV2)

@@ -136,7 +136,7 @@ pub async fn stats_handler(bot: Bot, msg: Message, db: DbClient, admin_ids: Vec<
                 used_memory,
                 total_memory,
                 (used_memory / total_memory) * 100.0
-            );
+            ).replace('.', "\\.");
             bot.send_message(msg.chat.id, message)
                 .parse_mode(teloxide::types::ParseMode::MarkdownV2)
                 .await?;

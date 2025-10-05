@@ -98,7 +98,7 @@ pub async fn about_handler(bot: Bot, msg: Message) -> ResponseResult<()> {
 }
 
 pub async fn stats_handler(bot: Bot, msg: Message, db: DbClient, admin_ids: Vec<i64>) -> ResponseResult<()> {
-    use sysinfo::{System, Pid, ProcessRefreshKind};
+    use sysinfo::{System, Pid, ProcessesToUpdate};
 
     let user_id = msg.from.as_ref().map(|u| u.id.0 as i64).unwrap_or(0);
 
@@ -111,7 +111,7 @@ pub async fn stats_handler(bot: Bot, msg: Message, db: DbClient, admin_ids: Vec<
     // Get this bot process's stats
     let mut sys = System::new();
     let pid = Pid::from_u32(std::process::id());
-    sys.refresh_process_specifics(pid, ProcessRefreshKind::everything());
+    sys.refresh_processes(ProcessesToUpdate::Some(&[pid]), true);
 
     let (cpu_usage, memory_mb) = if let Some(process) = sys.process(pid) {
         let cpu = process.cpu_usage();

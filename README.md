@@ -35,6 +35,8 @@
 
 ### Option 1: Docker Compose (Recommended)
 
+Using pre-built image from GitHub Container Registry:
+
 ```bash
 # Clone the repository
 git clone https://github.com/Malith-Rukshan/Emoji-Encoder-Bot.git
@@ -44,14 +46,34 @@ cd Emoji-Encoder-Bot
 cp .env.example .env
 # Edit .env and add your BOT_TOKEN
 
-# Start the bot with MongoDB
+# Start the bot with MongoDB (uses pre-built image)
 docker-compose up -d
 
 # View logs
 docker-compose logs -f bot
 ```
 
-### Option 2: Local Development
+### Option 2: Docker Compose (Build from Source)
+
+Build the image locally:
+
+```bash
+# Clone the repository
+git clone https://github.com/Malith-Rukshan/Emoji-Encoder-Bot.git
+cd Emoji-Encoder-Bot
+
+# Configure environment
+cp .env.example .env
+# Edit .env and add your BOT_TOKEN
+
+# Start the bot with MongoDB (builds locally)
+docker-compose -f docker-compose.build.yml up -d
+
+# View logs
+docker-compose -f docker-compose.build.yml logs -f bot
+```
+
+### Option 3: Local Development
 
 ```bash
 # Prerequisites: Rust 1.90+
@@ -205,6 +227,43 @@ The encoded emoji looks completely normal but contains hidden data! 🎩✨
 - 📊 **Optional Stats** - Works with or without MongoDB
 - 🔄 **Auto-Reconnect** - Resilient to network issues
 - 🐳 **Containerized** - Production-ready Docker setup
+- 📦 **Pre-built Images** - Available on GitHub Container Registry
+
+---
+
+## 🐳 Docker Images
+
+Pre-built Docker images are automatically published to GitHub Container Registry on every push to main branch.
+
+### Available Images
+
+- **Latest**: `ghcr.io/malith-rukshan/emoji-encoder-bot:latest`
+- **Branch-based**: `ghcr.io/malith-rukshan/emoji-encoder-bot:main-<sha>`
+
+### Using Docker Image
+
+```bash
+# Pull the latest image
+docker pull ghcr.io/malith-rukshan/emoji-encoder-bot:latest
+
+# Run directly
+docker run -e BOT_TOKEN=your_token ghcr.io/malith-rukshan/emoji-encoder-bot:latest
+
+# Or use docker-compose.yml (recommended)
+docker-compose up -d
+```
+
+### Building Locally
+
+If you prefer to build from source:
+
+```bash
+# Build from source
+docker-compose -f docker-compose.build.yml up -d
+
+# Or build manually
+docker build -t emoji-encoder-bot .
+```
 
 ---
 

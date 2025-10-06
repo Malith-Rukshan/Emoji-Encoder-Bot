@@ -72,6 +72,27 @@ pub fn decode(text: &str) -> Result<String, EncoderError> {
     String::from_utf8(decoded_bytes).map_err(EncoderError::from)
 }
 
+/// Encode a Telegram file_id into an emoji
+pub fn encode_file_id(emoji: &str, file_id: &str) -> Result<String, EncoderError> {
+    let file_data = format!("TG_FILE_{}", file_id.trim());
+    encode(emoji, &file_data)
+}
+
+/// Decode and check if the decoded text is a file_id
+/// Returns (is_file, content) where:
+/// - is_file: true if it's a file_id, false if it's regular text
+/// - content: the file_id (without TG_FILE_ prefix) or the decoded text
+pub fn decode_with_file_check(text: &str) -> Result<(bool, String), EncoderError> {
+    let decoded = decode(text)?;
+    let trimmed = decoded.trim();
+
+    if let Some(file_id) = trimmed.strip_prefix("TG_FILE_") {
+        Ok((true, file_id.to_string()))
+    } else {
+        Ok((false, decoded))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -11,10 +11,10 @@
 
 </div>
 
-<h4 align="center">Hide Secret Messages Inside Emojis! 🤫✨</h4>
+<h4 align="center">Hide Secret Messages & Files Inside Emojis! 🤫✨</h4>
 
 <div align="center">
-  - A light-weight Telegram bot that hide text messages inside emojis! -
+  - A light-weight Telegram bot that hides text messages and files inside emojis! -
   <br/>
   <sup><sub>🦀 Crashing is not an option. It's built with Rust ツ</sub></sup>
 </div>
@@ -22,7 +22,8 @@
 ## 🎯 Features
 
 - 🔐 **Encode Messages** - Hide any text inside emojis using invisible Unicode characters
-- 🔓 **Auto-Decode** - Automatically detects and reveals hidden messages
+- 📁 **Encode Files** - Hide files (photos, videos, stickers, documents, etc.) inside emojis
+- 🔓 **Auto-Decode** - Automatically detects and reveals hidden messages or files
 - 🎲 **Random Emoji** - Let the bot pick a random emoji for you
 - ✏️ **Custom Emoji** - Use any emoji you want
 - 💬 **Inline Mode** - Encode messages directly in any chat
@@ -154,18 +155,25 @@ Send `/start` to [@userinfobot](https://t.me/userinfobot) on Telegram
 
 ### In Private Chat
 
+**For Text:**
 1. **Send text** to the bot
 2. **Choose an emoji** from the grid (or Random/Custom)
 3. **Share the encoded emoji anywhere!**
 4. **Send encoded emoji back** to automatically decode
 
+**For Files:**
+1. **Send any file** (photo, video, sticker, document, audio, voice, video note, animation)
+2. **Choose an emoji** from the grid (or Random/Custom)
+3. **Share the encoded emoji!**
+4. **Send encoded emoji back** to receive the original file
+
 ### In Groups
 
-Use commands to encode/decode messages:
+Use commands to encode/decode messages and files:
 - `/encode <text>` - Encode text with random emoji
-- `/encode` (as reply) - Encode the replied message
-- `/decode <emoji>` - Decode hidden message from emoji
-- `/decode` (as reply) - Decode the replied message
+- `/encode` (as reply) - Encode the replied message or file
+- `/decode <emoji>` - Decode hidden message or file from emoji
+- `/decode` (as reply) - Decode the replied message or file
 
 ### Inline Mode
 
@@ -200,8 +208,10 @@ These 256 variations perfectly map to all possible byte values (0-255)!
 
 ### The Process
 
+**For Text:**
+
 1. **Encoding**: Your text → UTF-8 bytes → Variation selectors → Appended to emoji
-   
+
    ![Emoji Encoding Process](./assets/encoding.svg)
 
    ```
@@ -211,10 +221,33 @@ These 256 variations perfectly map to all possible byte values (0-255)!
    ```
 
 2. **Decoding**: Emoji with variations → Extract selectors → Convert to bytes → UTF-8 text
-   
+
    ![Emoji to UTF-8 Conversion](./assets/decoding.svg)
 
+**For Files:**
+
+1. **Encoding**: File's unique Telegram file_id → Prefixed with "TG_FILE_" → UTF-8 bytes → Variation selectors → Appended to emoji
+
+   ```
+   File ID: "AgACAgIAAxkBAAI..."
+   Prefixed: "TG_FILE_AgACAgIAAxkBAAI..."
+   Result: 🎭[VS84][VS71][VS95][VS70]...[encoded file_id]
+   ```
+
+2. **Decoding**: Emoji with variations → Extract selectors → Convert to bytes → Detect "TG_FILE_" prefix → Extract file_id → Send original file
+
 The encoded emoji looks completely normal but contains hidden data! 🎩✨
+
+### Supported File Types
+
+- 📷 **Photos** - Any image sent to Telegram
+- 🎬 **Videos** - Video files
+- 🎵 **Audio** - Music and audio files
+- 📄 **Documents** - Any document files
+- 🎭 **Stickers** - Telegram stickers
+- 🎤 **Voice** - Voice messages
+- 🎥 **Video Notes** - Round video messages
+- 🎞️ **Animations** - GIFs and animations
 
 ## 🛠️ Tech Stack
 

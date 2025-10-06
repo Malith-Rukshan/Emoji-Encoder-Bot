@@ -1,5 +1,5 @@
-use teloxide::{prelude::*, types::{InlineKeyboardButton, InlineKeyboardMarkup}};
-use crate::utils::{EMOJI_LIST, encode, decode, get_random_emoji};
+use teloxide::{prelude::*, types::{InlineKeyboardButton, InlineKeyboardMarkup, InputFile, FileId}};
+use crate::utils::{EMOJI_LIST, encode, encode_file_id, decode_with_file_check, get_random_emoji, decode_file_type, FileType};
 use crate::models::DbClient;
 
 pub async fn start_handler(bot: Bot, msg: Message, db: DbClient) -> ResponseResult<()> {
@@ -41,13 +41,14 @@ pub async fn start_handler(bot: Bot, msg: Message, db: DbClient) -> ResponseResu
     bot.send_message(
         msg.chat.id,
         "👋 *Welcome to Emoji Encoder Bot\\!*\n\n\
-         Send me any text and I'll help you hide it inside an emoji using Unicode variation selectors\\.\n\n\
+         Send me any text or file and I'll help you hide it inside an emoji using Unicode variation selectors\\.\n\n\
          📝 *Features:*\n\
-         • Send text to encode with an emoji\n\
-         • Send encoded emoji to decode the hidden message\n\
+         • Hide text messages inside emojis\n\
+         • Hide files \\(photos, videos, stickers, documents, etc\\.\\) inside emojis\n\
+         • Send encoded emoji to reveal the hidden content\n\
          • Use /encode or /decode commands \\(works in groups\\)\n\
          • Use inline mode: @EmojiEncoderBot [emoji] [text]\n\n\
-         Just send me a message to get started\\!"
+         Just send me a message or file to get started\\!"
     )
     .parse_mode(teloxide::types::ParseMode::MarkdownV2)
     .reply_markup(keyboard)
@@ -59,14 +60,18 @@ pub async fn help_handler(bot: Bot, msg: Message) -> ResponseResult<()> {
     let help_text = "📚 *How to Use Emoji Encoder Bot*\n\n\
         *In Private Chat:*\n\
         • Send any text and select an emoji to encode\n\
-        • Send encoded emoji to automatically decode\n\n\
+        • Send any file \\(photo, video, sticker, etc\\.\\) and select an emoji to hide it\n\
+        • Send encoded emoji to automatically decode and reveal content\n\n\
+        *Supported File Types:*\n\
+        📷 Photos • 🎬 Videos • 🎵 Audio • 📄 Documents\n\
+        🎭 Stickers • 🎤 Voice • 🎥 Video Notes • 🎞️ Animations\n\n\
         *Commands:*\n\
         /encode \\<text\\> \\- Encode text with random emoji\n\
-        /encode \\(reply\\) \\- Encode replied message\n\
-        /decode \\<emoji\\> \\- Decode hidden message\n\
+        /encode \\(reply\\) \\- Encode replied message or file\n\
+        /decode \\<emoji\\> \\- Decode hidden message or file\n\
         /decode \\(reply\\) \\- Decode replied message\n\n\
         *In Groups:*\n\
-        Use /encode or /decode commands with text or as reply to messages\\.\n\n\
+        Use /encode or /decode commands with text or as reply to messages/files\\.\n\n\
         *Inline Mode:*\n\
         Type @EmojiEncoderBot followed by your text in any chat\\.\n\n\
         *Other Commands:*\n\
@@ -196,27 +201,54 @@ pub fn create_emoji_keyboard() -> InlineKeyboardMarkup {
 }
 
 pub async fn encode_command_handler(bot: Bot, msg: Message, text: String) -> ResponseResult<()> {
-    let text_to_encode = if text.trim().is_empty() {
-        // If no text provided, check if it's a reply to a message
+    // Check if replying to a file message
+    if text.trim().is_empty() {
         if let Some(reply_msg) = msg.reply_to_message() {
-            reply_msg.text().unwrap_or("").to_string()
+            // Try to extract file info from the replied message
+            if let Some((file_id, _file_type)) = extract_file_info_from_msg(reply_msg) {
+                // It's a file, encode the file_id
+                let emoji = get_random_emoji();
+                match encode_file_id(emoji, &file_id) {
+                    Ok(encoded) => {
+                        bot.send_message(msg.chat.id, &encoded).await?;
+                    }
+                    Err(e) => {
+                        bot.send_message(msg.chat.id, format!("❌ Error encoding: {}", e))
+                            .await?;
+                    }
+                }
+                return Ok(());
+            }
+
+            // It's a text message
+            let text_to_encode = reply_msg.text().unwrap_or("").to_string();
+            if text_to_encode.is_empty() {
+                bot.send_message(msg.chat.id, "❌ No text or file to encode")
+                    .await?;
+                return Ok(());
+            }
+
+            let emoji = get_random_emoji();
+            match encode(emoji, &text_to_encode) {
+                Ok(encoded) => {
+                    bot.send_message(msg.chat.id, &encoded).await?;
+                }
+                Err(e) => {
+                    bot.send_message(msg.chat.id, format!("❌ Error encoding: {}", e))
+                        .await?;
+                }
+            }
+            return Ok(());
         } else {
             bot.send_message(msg.chat.id, "❌ Please provide text to encode or reply to a message with /encode")
                 .await?;
             return Ok(());
         }
-    } else {
-        text
-    };
-
-    if text_to_encode.is_empty() {
-        bot.send_message(msg.chat.id, "❌ No text to encode")
-            .await?;
-        return Ok(());
     }
 
+    // Text provided directly in command
     let emoji = get_random_emoji();
-    match encode(emoji, &text_to_encode) {
+    match encode(emoji, &text) {
         Ok(encoded) => {
             bot.send_message(msg.chat.id, &encoded).await?;
         }
@@ -259,19 +291,120 @@ pub async fn decode_command_handler(bot: Bot, msg: Message, text: String) -> Res
         return Ok(());
     }
 
-    match decode(&text_to_decode) {
-        Ok(decoded) => {
-            if decoded.is_empty() {
+    match decode_with_file_check(&text_to_decode) {
+        Ok((is_file, content)) => {
+            if content.is_empty() {
                 bot.send_message(msg.chat.id, "❌ No encoded message found")
                     .await?;
+            } else if is_file {
+                // It's a file_id, try to send the file
+                handle_decode_file_command(&bot, &msg, &content).await?;
             } else {
-                bot.send_message(msg.chat.id, format!("🔓 Decoded message:\n\n{}", decoded))
+                // It's regular text
+                bot.send_message(msg.chat.id, format!("🔓 Decoded message:\n\n{}", content))
                     .await?;
             }
         }
         Err(e) => {
             bot.send_message(msg.chat.id, format!("❌ Error decoding: {}", e))
                 .await?;
+        }
+    }
+
+    Ok(())
+}
+
+/// Extract file_id and file_type from a message
+fn extract_file_info_from_msg(msg: &Message) -> Option<(String, String)> {
+    if let Some(photo) = msg.photo() {
+        if let Some(largest) = photo.last() {
+            return Some((largest.file.id.to_string(), "photo".to_string()));
+        }
+    }
+
+    if let Some(video) = msg.video() {
+        return Some((video.file.id.to_string(), "video".to_string()));
+    }
+
+    if let Some(audio) = msg.audio() {
+        return Some((audio.file.id.to_string(), "audio".to_string()));
+    }
+
+    if let Some(document) = msg.document() {
+        return Some((document.file.id.to_string(), "document".to_string()));
+    }
+
+    if let Some(sticker) = msg.sticker() {
+        return Some((sticker.file.id.to_string(), "sticker".to_string()));
+    }
+
+    if let Some(voice) = msg.voice() {
+        return Some((voice.file.id.to_string(), "voice".to_string()));
+    }
+
+    if let Some(video_note) = msg.video_note() {
+        return Some((video_note.file.id.to_string(), "video note".to_string()));
+    }
+
+    if let Some(animation) = msg.animation() {
+        return Some((animation.file.id.to_string(), "animation".to_string()));
+    }
+
+    None
+}
+
+/// Handle decoding and sending files in command context
+async fn handle_decode_file_command(bot: &Bot, msg: &Message, file_id: &str) -> ResponseResult<()> {
+    let send_result = try_send_file_command(bot, msg.chat.id, file_id).await;
+
+    match send_result {
+        Ok(_) => Ok(()),
+        Err(_) => {
+            bot.send_message(
+                msg.chat.id,
+                format!("🔓 Decoded file ID:\n\n`{}`\n\n⚠️ Unable to send this file. It may have been deleted or is no longer accessible.", file_id)
+            )
+            .parse_mode(teloxide::types::ParseMode::MarkdownV2)
+            .await?;
+            Ok(())
+        }
+    }
+}
+
+/// Try to send a file by its file_id (for commands)
+/// Decodes the file_id to determine the type and sends it directly
+async fn try_send_file_command(bot: &Bot, chat_id: ChatId, file_id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    // Decode the file_id to get the file type
+    let file_type = decode_file_type(file_id)?;
+
+    // Send based on the decoded type
+    match file_type {
+        FileType::Photo => {
+            bot.send_photo(chat_id, InputFile::file_id(FileId(file_id.to_string()))).await?;
+        }
+        FileType::Video => {
+            bot.send_video(chat_id, InputFile::file_id(FileId(file_id.to_string()))).await?;
+        }
+        FileType::Voice => {
+            bot.send_voice(chat_id, InputFile::file_id(FileId(file_id.to_string()))).await?;
+        }
+        FileType::Document => {
+            bot.send_document(chat_id, InputFile::file_id(FileId(file_id.to_string()))).await?;
+        }
+        FileType::Sticker => {
+            bot.send_sticker(chat_id, InputFile::file_id(FileId(file_id.to_string()))).await?;
+        }
+        FileType::Audio => {
+            bot.send_audio(chat_id, InputFile::file_id(FileId(file_id.to_string()))).await?;
+        }
+        FileType::Animation => {
+            bot.send_animation(chat_id, InputFile::file_id(FileId(file_id.to_string()))).await?;
+        }
+        FileType::VideoNote => {
+            bot.send_video_note(chat_id, InputFile::file_id(FileId(file_id.to_string()))).await?;
+        }
+        FileType::Unknown => {
+            return Err("Unknown file type".into());
         }
     }
 

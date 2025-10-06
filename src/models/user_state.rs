@@ -7,6 +7,7 @@ use tokio::sync::RwLock;
 pub enum BotState {
     Idle,
     AwaitingCustomEmoji { text: String },
+    AwaitingFileEmoji { file_id: String, file_type: String },
 }
 
 pub type StateStorage = Arc<RwLock<HashMap<i64, BotState>>>;

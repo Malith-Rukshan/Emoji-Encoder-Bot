@@ -104,8 +104,12 @@ enum Command {
     Stats,
     #[command(description = "Encode text or reply to a message")]
     Encode(String),
+    #[command(description = "Encode text or reply to a message")]
+    Hide(String),
     #[command(description = "Decode emoji or reply to a message")]
     Decode(String),
+    #[command(description = "Decode emoji or reply to a message")]
+    Show(String),
 }
 
 async fn command_handler(
@@ -138,10 +142,10 @@ async fn command_handler(
                 Ok(())
             }
         }
-        Command::Encode(text) => {
+        Command::Encode(text) | Command::Hide(text) => {
             handlers::encode_command_handler(bot, msg, text).await
         }
-        Command::Decode(text) => {
+        Command::Decode(text) | Command::Show(text) => {
             handlers::decode_command_handler(bot, msg, text).await
         }
     }

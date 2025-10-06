@@ -21,9 +21,9 @@ pub async fn start_handler(bot: Bot, msg: Message, db: DbClient) -> ResponseResu
 
     let keyboard = InlineKeyboardMarkup::new(vec![
         vec![
-            InlineKeyboardButton::url(
-                "➕ Add to Channel ➕",
-                format!("https://t.me/{}?startchannel=botstart", bot_username).parse().unwrap()
+            InlineKeyboardButton::switch_inline_query(
+                "🔄 Try Inline Mode",
+                ""
             ),
             InlineKeyboardButton::url(
                 "➕ Add to Group ➕",

@@ -84,13 +84,24 @@ pub fn encode_file_id(emoji: &str, file_id: &str) -> Result<String, EncoderError
 /// - content: the file_id (without TG_FILE_ prefix) or the decoded text
 pub fn decode_with_file_check(text: &str) -> Result<(bool, String), EncoderError> {
     let decoded = decode(text)?;
-    let trimmed = decoded.trim();
 
-    if let Some(file_id) = trimmed.strip_prefix("TG_FILE_") {
-        Ok((true, file_id.to_string()))
-    } else {
-        Ok((false, decoded))
+    // Check if TG_FILE_ exists anywhere in the decoded text
+    if let Some(pos) = decoded.find("TG_FILE_") {
+        // Extract everything after TG_FILE_
+        let file_part = &decoded[pos + 8..]; // 8 is the length of "TG_FILE_"
+
+        // Remove all whitespace from the file_id
+        let file_id = file_part.chars()
+            .filter(|c| !c.is_whitespace())
+            .collect::<String>();
+
+        if !file_id.is_empty() {
+            return Ok((true, file_id));
+        }
     }
+
+    // Not a file, return the original decoded text
+    Ok((false, decoded))
 }
 
 #[cfg(test)]

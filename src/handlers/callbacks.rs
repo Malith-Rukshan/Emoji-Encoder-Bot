@@ -18,7 +18,8 @@ pub async fn callback_handler(bot: Bot, q: CallbackQuery, state_storage: StateSt
                         handle_file_encode(&bot, &q, emoji, &file_id, &state_storage, user_id).await?;
                     }
                     _ => {
-                        handle_encode(&bot, &q, emoji).await?;
+                        // Try file first, fallback to text
+                        handle_encode_with_file_check(&bot, &q, emoji, &state_storage, user_id).await?;
                     }
                 }
             }
@@ -30,7 +31,8 @@ pub async fn callback_handler(bot: Bot, q: CallbackQuery, state_storage: StateSt
                         handle_file_encode(&bot, &q, emoji, &file_id, &state_storage, user_id).await?;
                     }
                     _ => {
-                        handle_encode(&bot, &q, emoji).await?;
+                        // Try file first, fallback to text
+                        handle_encode_with_file_check(&bot, &q, emoji, &state_storage, user_id).await?;
                     }
                 }
             }
@@ -42,32 +44,6 @@ pub async fn callback_handler(bot: Bot, q: CallbackQuery, state_storage: StateSt
     }
 
     bot.answer_callback_query(q.id).await?;
-    Ok(())
-}
-
-async fn handle_encode(bot: &Bot, q: &CallbackQuery, emoji: &str) -> ResponseResult<()> {
-    if let Some(msg) = q.message.as_ref().and_then(|m| m.regular_message()) {
-        // Get the original text from the replied message
-        if let Some(reply_to_msg) = msg.reply_to_message() {
-            if let Some(text) = reply_to_msg.text() {
-                match encode(emoji, text) {
-                    Ok(encoded) => {
-                        bot.edit_message_text(msg.chat.id, msg.id, &encoded).await?;
-                    }
-                    Err(e) => {
-                        bot.send_message(msg.chat.id, format!("❌ Error encoding: {}", e))
-                            .await?;
-                    }
-                }
-            } else {
-                bot.send_message(msg.chat.id, "❌ Could not find the original text message.")
-                    .await?;
-            }
-        } else {
-            bot.send_message(msg.chat.id, "❌ Could not find the original text message.")
-                .await?;
-        }
-    }
     Ok(())
 }
 
@@ -142,4 +118,79 @@ async fn handle_custom(bot: &Bot, q: &CallbackQuery, state_storage: &StateStorag
         }
     }
     Ok(())
+}
+
+/// Handle encoding with automatic file/text detection from replied message
+async fn handle_encode_with_file_check(
+    bot: &Bot,
+    q: &CallbackQuery,
+    emoji: &str,
+    state_storage: &StateStorage,
+    user_id: i64,
+) -> ResponseResult<()> {
+    if let Some(msg) = q.message.as_ref().and_then(|m| m.regular_message()) {
+        if let Some(reply_to_msg) = msg.reply_to_message() {
+            // Check if it's a file first
+            if let Some((file_id, _file_type)) = extract_file_info_from_callback(reply_to_msg) {
+                handle_file_encode(bot, q, emoji, &file_id, state_storage, user_id).await?;
+            } else if let Some(text) = reply_to_msg.text() {
+                // It's a text message
+                match encode(emoji, text) {
+                    Ok(encoded) => {
+                        bot.edit_message_text(msg.chat.id, msg.id, &encoded).await?;
+                    }
+                    Err(e) => {
+                        bot.send_message(msg.chat.id, format!("❌ Error encoding: {}", e))
+                            .await?;
+                    }
+                }
+            } else {
+                bot.send_message(msg.chat.id, "❌ Could not find the original message.")
+                    .await?;
+            }
+        } else {
+            bot.send_message(msg.chat.id, "❌ Could not find the original message.")
+                .await?;
+        }
+    }
+    Ok(())
+}
+
+/// Extract file_id and file_type from a message (for callbacks)
+fn extract_file_info_from_callback(msg: &Message) -> Option<(String, String)> {
+    if let Some(photo) = msg.photo() {
+        if let Some(largest) = photo.last() {
+            return Some((largest.file.id.to_string(), "photo".to_string()));
+        }
+    }
+
+    if let Some(video) = msg.video() {
+        return Some((video.file.id.to_string(), "video".to_string()));
+    }
+
+    if let Some(audio) = msg.audio() {
+        return Some((audio.file.id.to_string(), "audio".to_string()));
+    }
+
+    if let Some(document) = msg.document() {
+        return Some((document.file.id.to_string(), "document".to_string()));
+    }
+
+    if let Some(sticker) = msg.sticker() {
+        return Some((sticker.file.id.to_string(), "sticker".to_string()));
+    }
+
+    if let Some(voice) = msg.voice() {
+        return Some((voice.file.id.to_string(), "voice".to_string()));
+    }
+
+    if let Some(video_note) = msg.video_note() {
+        return Some((video_note.file.id.to_string(), "video note".to_string()));
+    }
+
+    if let Some(animation) = msg.animation() {
+        return Some((animation.file.id.to_string(), "animation".to_string()));
+    }
+
+    None
 }

@@ -1,6 +1,6 @@
 use teloxide::prelude::*;
 use teloxide::types::{InputFile, FileId};
-use crate::models::{StateStorage, get_user_state, clear_user_state, set_user_state, BotState};
+use crate::models::{StateStorage, get_user_state, clear_user_state, BotState};
 use crate::utils::{decode_with_file_check, encode, encode_file_id, decode_file_type, FileType};
 use crate::handlers::commands::create_emoji_keyboard;
 
@@ -132,20 +132,16 @@ fn get_file_type_name(file_type: &str) -> &str {
 async fn handle_file_message(
     bot: Bot,
     msg: Message,
-    state_storage: StateStorage,
-    user_id: i64,
-    file_id: String,
+    _state_storage: StateStorage,
+    _user_id: i64,
+    _file_id: String,
     file_type: String,
 ) -> ResponseResult<()> {
     let keyboard = create_emoji_keyboard();
     let type_name = get_file_type_name(&file_type);
 
-    // Save state to remember we're waiting for emoji selection for this file
-    let state = BotState::AwaitingFileEmoji {
-        file_id: file_id.clone(),
-        file_type: file_type.clone(),
-    };
-    set_user_state(&state_storage, user_id, state).await;
+    // Don't set state - keep user in Idle so they can send multiple files
+    // The callback handler will get file info from the replied message
 
     bot.send_message(
         msg.chat.id,

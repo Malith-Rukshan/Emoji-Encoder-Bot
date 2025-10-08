@@ -35,21 +35,24 @@ pub async fn message_handler(bot: Bot, msg: Message, state_storage: StateStorage
                 return Ok(());
             }
 
-            // Try to decode only if the message contains variation selectors
-            if text.chars().any(|c| {
-                let code = c as u32;
-                (0xFE00..=0xFE0F).contains(&code) || (0xE0100..=0xE01EF).contains(&code)
-            }) {
-                if let Ok((is_file, content)) = decode_with_file_check(&text) {
-                    if is_file {
-                        // It's a file_id, try to send the file
-                        handle_decode_file(&bot, &msg, &content).await?;
-                        return Ok(());
-                    } else if !content.is_empty() {
-                        // It's regular text
-                        bot.send_message(msg.chat.id, format!("🔓 Decoded message:\n\n{}", content))
-                            .await?;
-                        return Ok(());
+            // Only decode messages in private chats
+            if matches!(msg.chat.kind, teloxide::types::ChatKind::Private(_)) {
+                // Try to decode only if the message contains variation selectors
+                if text.chars().any(|c| {
+                    let code = c as u32;
+                    (0xFE00..=0xFE0F).contains(&code) || (0xE0100..=0xE01EF).contains(&code)
+                }) {
+                    if let Ok((is_file, content)) = decode_with_file_check(&text) {
+                        if is_file {
+                            // It's a file_id, try to send the file
+                            handle_decode_file(&bot, &msg, &content).await?;
+                            return Ok(());
+                        } else if !content.is_empty() {
+                            // It's regular text
+                            bot.send_message(msg.chat.id, format!("🔓 Decoded message:\n\n{}", content))
+                                .await?;
+                            return Ok(());
+                        }
                     }
                 }
             }

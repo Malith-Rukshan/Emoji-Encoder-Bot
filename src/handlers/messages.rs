@@ -22,10 +22,12 @@ pub async fn message_handler(bot: Bot, msg: Message, state_storage: StateStorage
             }
         }
         BotState::Idle => {
-            // Check if this is a file message
-            if let Some((file_id, file_type)) = extract_file_info(&msg) {
-                handle_file_message(bot, msg, state_storage, user_id, file_id, file_type).await?;
-                return Ok(());
+            // Check if this is a file message (only in private chats)
+            if matches!(msg.chat.kind, teloxide::types::ChatKind::Private(_)) {
+                if let Some((file_id, file_type)) = extract_file_info(&msg) {
+                    handle_file_message(bot, msg, state_storage, user_id, file_id, file_type).await?;
+                    return Ok(());
+                }
             }
 
             let text = msg.text().unwrap_or("").to_string();
@@ -52,14 +54,18 @@ pub async fn message_handler(bot: Bot, msg: Message, state_storage: StateStorage
                 }
             }
 
-            let keyboard = create_emoji_keyboard();
-            bot.send_message(
-                msg.chat.id,
-                "Select an emoji to encode your message:",
-            )
-            .reply_parameters(teloxide::types::ReplyParameters::new(msg.id))
-            .reply_markup(keyboard)
-            .await?;
+            // Only show emoji keyboard in private chats
+            // In groups/channels, only respond to commands or encoded messages
+            if matches!(msg.chat.kind, teloxide::types::ChatKind::Private(_)) {
+                let keyboard = create_emoji_keyboard();
+                bot.send_message(
+                    msg.chat.id,
+                    "Select an emoji to encode your message:",
+                )
+                .reply_parameters(teloxide::types::ReplyParameters::new(msg.id))
+                .reply_markup(keyboard)
+                .await?;
+            }
         }
     }
 

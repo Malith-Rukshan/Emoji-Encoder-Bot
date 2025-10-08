@@ -92,10 +92,25 @@ async fn handle_custom(bot: &Bot, q: &CallbackQuery, state_storage: &StateStorag
             )
             .await?;
         } else {
-            // Original text encoding mode
-            // Get the original text from the replied message
+            // Handle both text and file encoding
             if let Some(reply_to_msg) = msg.reply_to_message() {
-                if let Some(text) = reply_to_msg.text() {
+                // Check if it's a file first
+                if let Some((file_id, file_type)) = extract_file_info_from_callback(reply_to_msg) {
+                    // It's a file, set state accordingly
+                    let state = BotState::AwaitingFileEmoji {
+                        file_id,
+                        file_type,
+                    };
+                    set_user_state(state_storage, user_id, state).await;
+
+                    bot.edit_message_text(
+                        msg.chat.id,
+                        msg.id,
+                        "Please send me the emoji you want to use for encoding:",
+                    )
+                    .await?;
+                } else if let Some(text) = reply_to_msg.text() {
+                    // It's a text message
                     let state = BotState::AwaitingCustomEmoji {
                         text: text.to_string(),
                     };
@@ -108,11 +123,11 @@ async fn handle_custom(bot: &Bot, q: &CallbackQuery, state_storage: &StateStorag
                     )
                     .await?;
                 } else {
-                    bot.send_message(msg.chat.id, "❌ Could not find the original text message.")
+                    bot.send_message(msg.chat.id, "❌ Could not find the original text or file message.")
                         .await?;
                 }
             } else {
-                bot.send_message(msg.chat.id, "❌ Could not find the original text message.")
+                bot.send_message(msg.chat.id, "❌ Could not find the original message.")
                     .await?;
             }
         }
